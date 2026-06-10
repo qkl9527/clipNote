@@ -48,7 +48,7 @@ struct ContentView: View {
                 Spacer()
                 
                 Button(action: {
-                    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                    NotificationCenter.default.post(name: .clipNoteOpenSettings, object: nil)
                 }) {
                     Image(systemName: "gear")
                         .font(.caption)
@@ -58,7 +58,7 @@ struct ContentView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
         }
-        .frame(width: 900, height: 400)
+        .frame(minWidth: 640, minHeight: 320)
         .background(Color(nsColor: .windowBackgroundColor))
         .onChange(of: searchText) { _, newValue in
             clipboardManager.searchText = newValue

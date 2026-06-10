@@ -8,6 +8,7 @@ struct SettingsView: View {
     @AppStorage("pollingInterval") private var pollingInterval: Double = 0.5
     @AppStorage("launchAtLogin") private var launchAtLogin: Bool = false
     @AppStorage("showInDock") private var showInDock: Bool = false
+    @AppStorage("showInMenuBar") private var showInMenuBar: Bool = true
     
     var body: some View {
         TabView {
@@ -39,6 +40,10 @@ struct SettingsView: View {
             Section("基本设置") {
                 Toggle("开机自启动", isOn: $launchAtLogin)
                 Toggle("在 Dock 中显示图标", isOn: $showInDock)
+                Toggle("在顶部任务栏显示图标", isOn: $showInMenuBar)
+                Button("恢复默认窗口大小") {
+                    NotificationCenter.default.post(name: .clipNoteResetPanelSize, object: nil)
+                }
             }
             
             Section("监听设置") {

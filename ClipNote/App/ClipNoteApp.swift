@@ -12,5 +12,13 @@ struct ClipNoteApp: App {
                 .environmentObject(clipboardManager)
                 .environmentObject(storageManager)
         }
+        .commands {
+            CommandGroup(replacing: .appSettings) {
+                Button("设置...") {
+                    NotificationCenter.default.post(name: .clipNoteOpenSettings, object: nil)
+                }
+                .keyboardShortcut(",", modifiers: [.command])
+            }
+        }
     }
 }

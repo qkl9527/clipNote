@@ -38,6 +38,10 @@ class PanelManager {
     func hidePanel() {
         panel.hide()
     }
+
+    func resetPanelSize() {
+        panel.resetToDefaultSize()
+    }
     
     /// 获取剪贴板管理器
     func getClipboardManager() -> ClipboardManager? {

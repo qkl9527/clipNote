@@ -5,12 +5,11 @@ class FloatingPanel: NSPanel {
     static let shared = FloatingPanel()
 
     private var hostingView: NSHostingView<AnyView>?
-    private let defaultSize = NSSize(width: 900, height: 400)
-    private let minimumSize = NSSize(width: 640, height: 320)
+    private let minimumSize = NSSize(width: 300, height: 260)
 
     init() {
         super.init(
-            contentRect: NSRect(x: 0, y: 0, width: 900, height: 400),
+            contentRect: NSRect(origin: .zero, size: Self.defaultPanelSize),
             styleMask: [.nonactivatingPanel, .titled, .closable, .resizable],
             backing: .buffered,
             defer: true
@@ -27,7 +26,7 @@ class FloatingPanel: NSPanel {
         level = .floating
         isReleasedWhenClosed = false
         minSize = minimumSize
-        setContentSize(defaultSize)
+        setContentSize(Self.defaultPanelSize)
 
         backgroundColor = NSColor.windowBackgroundColor.withAlphaComponent(0.95)
         isOpaque = false
@@ -63,7 +62,7 @@ class FloatingPanel: NSPanel {
     }
 
     func resetToDefaultSize() {
-        setContentSize(defaultSize)
+        setContentSize(Self.defaultPanelSize)
         center()
     }
 
@@ -85,5 +84,12 @@ class FloatingPanel: NSPanel {
         let y = screenFrame.midY - panelFrame.height / 2
 
         setFrameOrigin(NSPoint(x: x, y: y))
+    }
+
+    private static var defaultPanelSize: NSSize {
+        let defaults = UserDefaults.standard
+        let width = max(300, min(defaults.integer(forKey: "defaultPanelWidth"), 1600))
+        let height = max(260, min(defaults.integer(forKey: "defaultPanelHeight"), 1000))
+        return NSSize(width: width, height: height)
     }
 }

@@ -35,12 +35,12 @@ enum ClipCategory: String, Codable, CaseIterable, DatabaseValueConvertible {
         case .link: return "link"
         case .code: return "chevron.left.forwardslash.chevron.right"
         case .markdown: return "doc.richtext"
+        case .image: return "photo"
+        case .file: return "doc"
         case .html: return "globe"
         case .richText: return "doc.richtext"
         case .imageUrl: return "photo"
         case .imageBase64: return "photo.stack"
-        case .image: return "photo"
-        case .file: return "doc"
         }
     }
     

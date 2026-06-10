@@ -1,7 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// 单张卡片视图
 struct ClipCardView: View {
     let item: ClipItem
     let isSelected: Bool
@@ -10,67 +9,25 @@ struct ClipCardView: View {
     @State private var isHovering = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // 卡片头部：分类图标 + 标签
-            HStack {
-                Image(systemName: item.category.icon)
-                    .font(.caption)
-                    .foregroundColor(categoryColor)
+        VStack(alignment: .leading, spacing: 10) {
+            header
 
-                Text(item.category.displayName)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Spacer()
-
-                if item.isPinned {
-                    Image(systemName: "pin.fill")
-                        .font(.caption2)
-                        .foregroundColor(.orange)
-                }
-
-                if item.isFavorite {
-                    Image(systemName: "star.fill")
-                        .font(.caption2)
-                        .foregroundColor(.yellow)
-                }
-            }
-
-            // 内容预览
             contentPreview
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             Spacer()
 
-            // 底部信息
-            VStack(alignment: .leading, spacing: 4) {
-                Divider()
-
-                HStack {
-                    Text(item.formattedTime)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-
-                    Spacer()
-
-                    if let sourceApp = item.sourceApp {
-                        Text(sourceApp)
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                    }
-                }
-            }
+            footer
         }
         .padding(12)
         .background(cardBackground)
-        .cornerRadius(10)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(
             RoundedRectangle(cornerRadius: 10)
-                .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
+                .stroke(isSelected ? ClipNoteTheme.primary : ClipNoteTheme.hairline, lineWidth: isSelected ? 2 : 1)
         )
-        .shadow(color: .black.opacity(0.1), radius: isHovering ? 8 : 4, y: isHovering ? 4 : 2)
-        .scaleEffect(isHovering ? 1.02 : 1.0)
+        .shadow(color: ClipNoteTheme.ink.opacity(isHovering ? 0.13 : 0.07), radius: isHovering ? 10 : 5, y: isHovering ? 5 : 2)
+        .scaleEffect(isHovering ? 1.015 : 1.0)
         .animation(.easeInOut(duration: 0.2), value: isHovering)
         .contentShape(RoundedRectangle(cornerRadius: 10))
         .onTapGesture(perform: onTap)
@@ -82,44 +39,114 @@ struct ClipCardView: View {
         }
     }
 
+    private var header: some View {
+        HStack(spacing: 6) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(categoryColor.opacity(0.16))
+                Image(systemName: item.category.icon)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(categoryColor)
+            }
+            .frame(width: 20, height: 20)
+
+            Text(item.category.displayName)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(isDarkPreview ? ClipNoteTheme.onDark : ClipNoteTheme.body)
+                .lineLimit(1)
+
+            Spacer()
+
+            if item.isPinned {
+                Image(systemName: "pin.fill")
+                    .font(.caption2)
+                    .foregroundColor(ClipNoteTheme.accentAmber)
+            }
+
+            if item.isFavorite {
+                Image(systemName: "star.fill")
+                    .font(.caption2)
+                    .foregroundColor(ClipNoteTheme.accentAmber)
+            }
+        }
+    }
+
+    private var footer: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Rectangle()
+                .fill(isDarkPreview ? Color.white.opacity(0.08) : ClipNoteTheme.hairlineSoft)
+                .frame(height: 1)
+
+            HStack(spacing: 6) {
+                Text(item.formattedTime)
+                    .font(.caption2)
+                    .foregroundColor(isDarkPreview ? ClipNoteTheme.onDarkSoft : ClipNoteTheme.muted)
+
+                Text(item.formattedSize)
+                    .font(.caption2)
+                    .foregroundColor(isDarkPreview ? ClipNoteTheme.onDarkSoft.opacity(0.8) : ClipNoteTheme.mutedSoft)
+
+                Spacer()
+
+                if let sourceApp = item.sourceApp {
+                    Text(sourceApp)
+                        .font(.caption2)
+                        .foregroundColor(isDarkPreview ? ClipNoteTheme.onDarkSoft : ClipNoteTheme.muted)
+                        .lineLimit(1)
+                }
+            }
+        }
+    }
+
     @ViewBuilder
     private var contentPreview: some View {
         switch item.category {
-        case .text, .link, .code, .markdown:
-            Text(item.previewText(maxLines: 5))
-                .font(.caption)
-                .lineLimit(5)
-                .foregroundColor(.primary)
-                .frame(maxWidth: .infinity, alignment: .leading)
+        case .code, .markdown:
+            darkTextPreview(label: item.category == .code ? (item.codeLanguage ?? "CODE") : "MD")
 
         case .html:
-            VStack(alignment: .leading, spacing: 4) {
-                Text(item.previewText(maxLines: 3))
-                    .font(.caption)
-                    .lineLimit(3)
-                    .foregroundColor(.primary)
+            darkTextPreview(label: "HTML")
 
-                Text("HTML")
+        case .text:
+            Text(item.previewText(maxLines: 5))
+                .font(.system(size: 12))
+                .lineLimit(5)
+                .foregroundColor(ClipNoteTheme.body)
+                .lineSpacing(3)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+        case .link:
+            VStack(alignment: .leading, spacing: 4) {
+                Text(item.previewText(maxLines: 4))
+                    .font(.system(size: 12))
+                    .lineLimit(4)
+                    .foregroundColor(ClipNoteTheme.primaryActive)
+                    .lineSpacing(3)
+
+                Text("LINK")
                     .font(.caption2)
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 2)
-                    .background(Color.red.opacity(0.2))
-                    .cornerRadius(4)
+                    .foregroundColor(ClipNoteTheme.muted)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(ClipNoteTheme.surfaceSoft)
+                    .clipShape(RoundedRectangle(cornerRadius: 5))
             }
 
         case .richText:
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.previewText(maxLines: 3))
-                    .font(.caption)
+                    .font(.system(size: 12))
                     .lineLimit(3)
-                    .foregroundColor(.primary)
+                    .foregroundColor(ClipNoteTheme.body)
+                    .lineSpacing(3)
 
                 Text("RTF")
                     .font(.caption2)
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 2)
-                    .background(Color.pink.opacity(0.2))
-                    .cornerRadius(4)
+                    .foregroundColor(ClipNoteTheme.muted)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(ClipNoteTheme.surfaceSoft)
+                    .clipShape(RoundedRectangle(cornerRadius: 5))
             }
 
         case .image, .imageBase64:
@@ -128,7 +155,8 @@ struct ClipCardView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(maxWidth: .infinity, maxHeight: 180)
-                    .cornerRadius(6)
+                    .background(ClipNoteTheme.surfaceSoft)
+                    .clipShape(RoundedRectangle(cornerRadius: 7))
             } else {
                 imagePlaceholder
             }
@@ -136,9 +164,9 @@ struct ClipCardView: View {
         case .imageUrl:
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.content)
-                    .font(.caption)
+                    .font(.system(size: 12))
                     .lineLimit(2)
-                    .foregroundColor(.blue)
+                    .foregroundColor(ClipNoteTheme.primaryActive)
 
                 imagePlaceholder
             }
@@ -147,14 +175,41 @@ struct ClipCardView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Image(systemName: "doc.fill")
                     .font(.title2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(ClipNoteTheme.muted)
 
                 Text(item.content)
-                    .font(.caption)
+                    .font(.system(size: 12))
                     .lineLimit(2)
-                    .foregroundColor(.primary)
+                    .foregroundColor(ClipNoteTheme.body)
             }
         }
+    }
+
+    private func darkTextPreview(label: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 5) {
+                Circle().fill(Color(hex: 0xc64545)).frame(width: 5, height: 5)
+                Circle().fill(ClipNoteTheme.accentAmber).frame(width: 5, height: 5)
+                Circle().fill(ClipNoteTheme.accentTeal).frame(width: 5, height: 5)
+
+                Spacer()
+
+                Text(label.uppercased())
+                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                    .foregroundColor(ClipNoteTheme.onDarkSoft)
+            }
+
+            Text(item.previewText(maxLines: 7))
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundColor(ClipNoteTheme.onDark)
+                .lineLimit(7)
+                .lineSpacing(3)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, minHeight: 154, alignment: .topLeading)
+        .background(ClipNoteTheme.surfaceDark)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     private var imagePlaceholder: some View {
@@ -162,39 +217,34 @@ struct ClipCardView: View {
             Spacer()
             Image(systemName: "photo")
                 .font(.title)
-                .foregroundColor(.secondary)
+                .foregroundColor(ClipNoteTheme.muted)
             Spacer()
         }
         .frame(maxWidth: .infinity)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(6)
+        .background(ClipNoteTheme.surfaceSoft)
+        .clipShape(RoundedRectangle(cornerRadius: 7))
     }
 
     private var cardBackground: some View {
         Group {
-            if isSelected {
-                Color.accentColor.opacity(0.1)
+            if isDarkPreview {
+                ClipNoteTheme.surfaceDarkElevated
+            } else if isSelected {
+                ClipNoteTheme.surfaceCard
             } else if isHovering {
-                Color(nsColor: .controlBackgroundColor)
+                ClipNoteTheme.surfaceSoft
             } else {
-                Color(nsColor: .windowBackgroundColor)
+                ClipNoteTheme.canvas
             }
         }
     }
 
     private var categoryColor: Color {
-        switch item.category {
-        case .text: return .blue
-        case .link: return .purple
-        case .code: return .green
-        case .markdown: return .orange
-        case .html: return .red
-        case .richText: return .pink
-        case .imageUrl: return .cyan
-        case .imageBase64: return .teal
-        case .image: return .indigo
-        case .file: return .gray
-        }
+        ClipNoteTheme.categoryColor(item.category)
+    }
+
+    private var isDarkPreview: Bool {
+        item.category == .code || item.category == .markdown || item.category == .html
     }
 
     private func dragItemProvider() -> NSItemProvider {

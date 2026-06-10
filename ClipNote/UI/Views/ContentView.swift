@@ -1,7 +1,6 @@
 import SwiftUI
 import AppKit
 
-/// 主视图 - 浮动面板内容
 struct ContentView: View {
     @EnvironmentObject var clipboardManager: ClipboardManager
     @State private var searchText = ""
@@ -12,20 +11,12 @@ struct ContentView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // 搜索栏
-            SearchBar(text: $searchText)
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-                .padding(.bottom, 8)
-            
-            // 分类标签
-            CategoryTabs(selectedCategory: $selectedCategory)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 8)
-            
-            Divider()
-            
-            // 水平滚动卡片列表
+            header
+
+            Rectangle()
+                .fill(ClipNoteTheme.hairline)
+                .frame(height: 1)
+
             HorizontalCardList(
                 clips: filteredClips,
                 onPaste: { item in
@@ -34,36 +25,15 @@ struct ContentView: View {
                 }
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            
-            Divider()
-            
-            // 底部状态栏
-            HStack {
-                Text("共 \(clipboardManager.clips.count) 条记录")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                Spacer()
-                
-                Text("⌥⌘V 唤出")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                Spacer()
-                
-                Button(action: {
-                    NotificationCenter.default.post(name: .clipNoteOpenSettings, object: nil)
-                }) {
-                    Image(systemName: "gear")
-                        .font(.caption)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+
+            Rectangle()
+                .fill(ClipNoteTheme.hairlineSoft)
+                .frame(height: 1)
+
+            footer
         }
-        .frame(minWidth: 640, minHeight: 320)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .frame(minWidth: 300, minHeight: 260)
+        .background(ClipNoteTheme.canvas)
         .onChange(of: searchText) { _, newValue in
             clipboardManager.searchText = newValue
         }
@@ -77,6 +47,75 @@ struct ContentView: View {
         .onDisappear {
             removeKeyDownMonitor()
         }
+    }
+
+    private var header: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 10) {
+                HStack(spacing: 8) {
+                    ClipNoteLogoView(size: 20)
+
+                    Text("ClipNote")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(ClipNoteTheme.ink)
+                }
+                .frame(width: 96, alignment: .leading)
+
+                SearchBar(text: $searchText)
+
+                Button(action: {
+                    NotificationCenter.default.post(name: .clipNoteOpenSettings, object: nil)
+                }) {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 13, weight: .medium))
+                        .frame(width: 26, height: 26)
+                        .foregroundColor(ClipNoteTheme.body)
+                        .background(ClipNoteTheme.surfaceSoft)
+                        .clipShape(RoundedRectangle(cornerRadius: 7))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 7)
+                                .stroke(ClipNoteTheme.hairline, lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+
+            CategoryTabs(selectedCategory: $selectedCategory)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 10)
+    }
+
+    private var footer: some View {
+        HStack(spacing: 12) {
+            Label("共 \(clipboardManager.clips.count) 条记录", systemImage: "tray.full")
+                .font(.caption)
+                .foregroundColor(ClipNoteTheme.muted)
+
+            if let selectedCategory {
+                Text(selectedCategory.displayName)
+                    .font(.caption)
+                    .foregroundColor(ClipNoteTheme.primaryActive)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(ClipNoteTheme.surfaceCard)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+            }
+
+            Spacer()
+
+            Text("⌥⌘V 唤出")
+                .font(.caption)
+                .foregroundColor(ClipNoteTheme.muted)
+
+            Text("拖拽 或 点击卡片粘贴")
+                .font(.caption)
+                .foregroundColor(ClipNoteTheme.mutedSoft)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(ClipNoteTheme.surfaceSoft.opacity(0.75))
     }
     
     private var filteredClips: [ClipItem] {

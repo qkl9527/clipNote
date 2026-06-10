@@ -33,7 +33,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func registerDefaultSettings() {
         UserDefaults.standard.register(defaults: [
             showInDockKey: false,
-            showInMenuBarKey: true
+            showInMenuBarKey: true,
+            "defaultPanelWidth": 900,
+            "defaultPanelHeight": 430,
+            "showCategoryShortcuts": true
         ])
     }
 

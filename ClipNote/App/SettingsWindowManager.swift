@@ -19,7 +19,7 @@ final class SettingsWindowManager {
             .environmentObject(StorageManager.shared)
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 480, height: 360),
+            contentRect: NSRect(x: 0, y: 0, width: 720, height: 520),
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
@@ -27,6 +27,7 @@ final class SettingsWindowManager {
         window.title = "ClipNote 设置"
         window.contentView = NSHostingView(rootView: view)
         window.isReleasedWhenClosed = false
+        window.minSize = NSSize(width: 680, height: 480)
         window.level = .modalPanel
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         window.center()

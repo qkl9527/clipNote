@@ -9,10 +9,11 @@ struct CategoryTabs: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                ForEach(categories, id: \.self) { category in
+                ForEach(Array(categories.enumerated()), id: \.offset) { index, category in
                     CategoryTab(
                         title: category?.displayName ?? "全部",
                         icon: category?.icon ?? "tray.full",
+                        shortcut: shortcutLabel(for: index),
                         isSelected: selectedCategory == category,
                         action: {
                             withAnimation(.easeInOut(duration: 0.2)) {
@@ -24,12 +25,18 @@ struct CategoryTabs: View {
             }
         }
     }
+
+    private func shortcutLabel(for index: Int) -> String? {
+        ""
+//        index <= 9 ? "⌘⌥\(index)" : nil
+    }
 }
 
 /// 单个分类标签
 struct CategoryTab: View {
     let title: String
     let icon: String
+    let shortcut: String?
     let isSelected: Bool
     let action: () -> Void
     
@@ -41,6 +48,12 @@ struct CategoryTab: View {
                 Text(title)
                     .font(.caption)
                     .fontWeight(isSelected ? .medium : .regular)
+
+                if let shortcut {
+                    Text(shortcut)
+                        .font(.caption2)
+                        .foregroundColor(isSelected ? .white.opacity(0.85) : .secondary)
+                }
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 5)

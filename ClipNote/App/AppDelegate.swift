@@ -118,34 +118,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func makeStatusBarIcon() -> NSImage {
-        let size = NSSize(width: 18, height: 18)
-        let image = NSImage(size: size)
-
-        image.lockFocus()
-        NSColor.black.setFill()
-
-        let boardPath = NSBezierPath(roundedRect: NSRect(x: 4, y: 2, width: 10, height: 13), xRadius: 2, yRadius: 2)
-        boardPath.fill()
-
-        NSColor.white.setFill()
-        let paperPath = NSBezierPath(roundedRect: NSRect(x: 5.5, y: 3.5, width: 7, height: 9.5), xRadius: 1.2, yRadius: 1.2)
-        paperPath.fill()
-
-        NSColor.black.setFill()
-        let clipPath = NSBezierPath(roundedRect: NSRect(x: 6.5, y: 13, width: 5, height: 3), xRadius: 1.4, yRadius: 1.4)
-        clipPath.fill()
-
-        let checkPath = NSBezierPath()
-        checkPath.lineWidth = 1.8
-        checkPath.lineCapStyle = .round
-        checkPath.lineJoinStyle = .round
-        checkPath.move(to: NSPoint(x: 6.5, y: 8))
-        checkPath.line(to: NSPoint(x: 8.5, y: 6))
-        checkPath.line(to: NSPoint(x: 12, y: 10))
-        checkPath.stroke()
-
-        image.unlockFocus()
-        image.isTemplate = true
+        let image = AppIconProvider.image.copy() as? NSImage ?? NSImage()
+        image.size = NSSize(width: 18, height: 18)
         image.accessibilityDescription = "ClipNote"
         return image
     }

@@ -7,12 +7,12 @@ enum ClipCategory: String, Codable, CaseIterable, DatabaseValueConvertible {
     case link = "link"
     case code = "code"
     case markdown = "markdown"
+    case image = "image"
+    case file = "file"
     case html = "html"
     case richText = "richText"
     case imageUrl = "imageUrl"
     case imageBase64 = "imageBase64"
-    case image = "image"
-    case file = "file"
     
     var displayName: String {
         switch self {
@@ -20,12 +20,12 @@ enum ClipCategory: String, Codable, CaseIterable, DatabaseValueConvertible {
         case .link: return "链接"
         case .code: return "代码"
         case .markdown: return "Markdown"
+        case .image: return "图片"
+        case .file: return "文件"
         case .html: return "HTML"
         case .richText: return "富文本"
         case .imageUrl: return "图片链接"
         case .imageBase64: return "Base64图片"
-        case .image: return "图片"
-        case .file: return "文件"
         }
     }
     

@@ -82,9 +82,11 @@ struct SettingsView: View {
             Section("快捷键说明") {
                 VStack(alignment: .leading, spacing: 8) {
                     shortcutRow(keys: "⌥⌘V", description: "唤出/隐藏面板")
+                    shortcutRow(keys: "⌘K", description: "清空搜索")
+                    shortcutRow(keys: "⌘⌥0", description: "选择全部")
+                    shortcutRow(keys: "⌘⌥1-9", description: "选择分类")
                     shortcutRow(keys: "Enter", description: "粘贴选中内容")
                     shortcutRow(keys: "⌘C", description: "复制到剪贴板")
-                    shortcutRow(keys: "⌘K", description: "清空搜索")
                     shortcutRow(keys: "Esc", description: "关闭面板")
                     shortcutRow(keys: "← →", description: "切换选中卡片")
                 }
@@ -132,9 +134,10 @@ struct SettingsView: View {
     
     private var aboutView: some View {
         VStack(spacing: 16) {
-            Image(systemName: "doc.on.clipboard")
-                .font(.system(size: 64))
-                .foregroundColor(.accentColor)
+            Image(nsImage: AppIconProvider.image)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 64, height: 64)
             
             Text("ClipNote")
                 .font(.title)

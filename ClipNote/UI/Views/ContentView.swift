@@ -1,10 +1,14 @@
 import SwiftUI
+import AppKit
 
 /// 主视图 - 浮动面板内容
 struct ContentView: View {
     @EnvironmentObject var clipboardManager: ClipboardManager
     @State private var searchText = ""
     @State private var selectedCategory: ClipCategory? = nil
+    @State private var keyDownMonitor: Any?
+
+    private let categoryShortcuts: [ClipCategory?] = [nil] + Array(ClipCategory.allCases.prefix(9))
     
     var body: some View {
         VStack(spacing: 0) {
@@ -68,11 +72,53 @@ struct ContentView: View {
         }
         .onAppear {
             clipboardManager.startMonitoring()
+            installKeyDownMonitor()
+        }
+        .onDisappear {
+            removeKeyDownMonitor()
         }
     }
     
     private var filteredClips: [ClipItem] {
         clipboardManager.filteredClips
+    }
+
+    private func installKeyDownMonitor() {
+        guard keyDownMonitor == nil else { return }
+
+        keyDownMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if handleKeyDown(event) {
+                return nil
+            }
+            return event
+        }
+    }
+
+    private func removeKeyDownMonitor() {
+        if let keyDownMonitor {
+            NSEvent.removeMonitor(keyDownMonitor)
+        }
+        keyDownMonitor = nil
+    }
+
+    private func handleKeyDown(_ event: NSEvent) -> Bool {
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        let characters = event.charactersIgnoringModifiers?.lowercased()
+
+        if flags.contains(.command), characters == "k" {
+            searchText = ""
+            clipboardManager.clearSearch()
+            return true
+        }
+
+        if flags.contains(.command), flags.contains(.option), let characters, let index = Int(characters) {
+            guard categoryShortcuts.indices.contains(index) else { return false }
+            selectedCategory = categoryShortcuts[index]
+            clipboardManager.selectCategory(categoryShortcuts[index])
+            return true
+        }
+
+        return false
     }
 }
 

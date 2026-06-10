@@ -101,8 +101,8 @@ struct ClipCardView: View {
     @ViewBuilder
     private var contentPreview: some View {
         switch item.category {
-        case .code, .markdown:
-            darkTextPreview(label: item.category == .code ? (item.codeLanguage ?? "CODE") : "MD")
+        case .code:
+            darkTextPreview(label: item.codeLanguage ?? "CODE")
 
         case .html:
             darkTextPreview(label: "HTML")
@@ -149,7 +149,7 @@ struct ClipCardView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 5))
             }
 
-        case .image, .imageBase64:
+        case .image:
             if let imageData = item.imageData, let nsImage = NSImage(data: imageData) {
                 Image(nsImage: nsImage)
                     .resizable()
@@ -158,16 +158,6 @@ struct ClipCardView: View {
                     .background(ClipNoteTheme.surfaceSoft)
                     .clipShape(RoundedRectangle(cornerRadius: 7))
             } else {
-                imagePlaceholder
-            }
-
-        case .imageUrl:
-            VStack(alignment: .leading, spacing: 4) {
-                Text(item.content)
-                    .font(.system(size: 12))
-                    .lineLimit(2)
-                    .foregroundColor(ClipNoteTheme.primaryActive)
-
                 imagePlaceholder
             }
 
@@ -244,12 +234,12 @@ struct ClipCardView: View {
     }
 
     private var isDarkPreview: Bool {
-        item.category == .code || item.category == .markdown || item.category == .html
+        item.category == .code || item.category == .html
     }
 
     private func dragItemProvider() -> NSItemProvider {
         switch item.category {
-        case .link, .imageUrl:
+        case .link:
             return urlDragItemProvider()
 
         case .html:
@@ -258,7 +248,7 @@ struct ClipCardView: View {
         case .richText:
             return dataDragItemProvider(data: item.rawRTF, type: .rtf)
 
-        case .image, .imageBase64:
+        case .image:
             if let imageData = item.imageData, let image = NSImage(data: imageData) {
                 return NSItemProvider(object: image)
             }
@@ -267,7 +257,7 @@ struct ClipCardView: View {
         case .file:
             return fileDragItemProvider()
 
-        case .text, .code, .markdown:
+        case .text, .code:
             return textDragItemProvider()
         }
     }

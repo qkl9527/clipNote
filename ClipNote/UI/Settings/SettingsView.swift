@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @EnvironmentObject var clipboardManager: ClipboardManager
-    @AppStorage("maxItems") private var maxItems: Int = 1000
+    @AppStorage("maxItems") private var maxItems: Int = 100_000
     @AppStorage("pollingInterval") private var pollingInterval: Double = 0.5
     @AppStorage("launchAtLogin") private var launchAtLogin: Bool = false
     @AppStorage("showInDock") private var showInDock: Bool = false
@@ -201,7 +201,7 @@ struct SettingsView: View {
                         .frame(width: 150)
                 }
 
-                SettingsToggleRow(title: "显示分类快捷键", subtitle: "在主窗口分类名称后显示 ⌘⌥数字", isOn: $showCategoryShortcuts)
+                // SettingsToggleRow(title: "显示分类快捷键", subtitle: "在主窗口分类名称后显示 ⌘⌥数字", isOn: $showCategoryShortcuts)
             }
 
             SettingsGroup("快捷键说明") {

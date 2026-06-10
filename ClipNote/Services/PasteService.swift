@@ -39,32 +39,33 @@ class PasteService {
         pasteboard.clearContents()
 
         switch item.category {
-        case .image, .imageBase64:
+        case .image:
             if let imageData = item.imageData {
-                pasteboard.setData(imageData, forType: .tiff)
+                if let image = NSImage(data: imageData) {
+                    pasteboard.writeObjects([image])
+                } else {
+                    pasteboard.setData(imageData, forType: .tiff)
+                }
             } else {
                 pasteboard.setString(item.content, forType: .string)
             }
 
         case .richText:
+            pasteboard.setString(item.content, forType: .string)
             if let rtfData = item.rawRTF {
                 pasteboard.setData(rtfData, forType: .rtf)
-            } else {
-                pasteboard.setString(item.content, forType: .string)
             }
 
         case .html:
+            pasteboard.setString(item.content, forType: .string)
             if let htmlData = item.rawHTML {
                 pasteboard.setData(htmlData, forType: .html)
-            } else {
-                pasteboard.setString(item.content, forType: .string)
             }
 
         case .link:
+            pasteboard.setString(item.content, forType: .string)
             if let url = URL(string: item.content) {
-                pasteboard.writeObjects([url as NSURL])
-            } else {
-                pasteboard.setString(item.content, forType: .string)
+                pasteboard.setString(url.absoluteString, forType: .URL)
             }
 
         default:

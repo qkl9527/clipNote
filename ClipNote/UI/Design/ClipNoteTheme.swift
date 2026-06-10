@@ -29,11 +29,8 @@ enum ClipNoteTheme {
         case .text: return primary
         case .link: return Color(hex: 0x8f6ab8)
         case .code: return accentTeal
-        case .markdown: return accentAmber
         case .html: return Color(hex: 0xc95f5f)
         case .richText: return Color(hex: 0xb56f95)
-        case .imageUrl: return Color(hex: 0x4d9fb2)
-        case .imageBase64: return Color(hex: 0x5db8a6)
         case .image: return Color(hex: 0x6f83bd)
         case .file: return muted
         }

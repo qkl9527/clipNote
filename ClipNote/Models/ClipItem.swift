@@ -4,7 +4,7 @@ import GRDB
 /// 剪贴板条目模型
 struct ClipItem: Codable, FetchableRecord, PersistableRecord, Identifiable {
     static let databaseTableName = "clips"
-    
+
     let id: UUID
     var content: String
     var category: ClipCategory
@@ -20,7 +20,7 @@ struct ClipItem: Codable, FetchableRecord, PersistableRecord, Identifiable {
     var codeLanguage: String?
     var charCount: Int
     var byteSize: Int
-    
+
     init(
         id: UUID = UUID(),
         content: String,
@@ -50,32 +50,47 @@ struct ClipItem: Codable, FetchableRecord, PersistableRecord, Identifiable {
         self.fileURL = fileURL
         self.codeLanguage = codeLanguage
         self.charCount = content.count
-        self.byteSize = content.utf8.count
+        self.byteSize = imageData?.count ?? rawRTF?.count ?? rawHTML?.count ?? content.utf8.count
     }
-    
+
     /// 获取预览文本（限制行数）
     func previewText(maxLines: Int = 4) -> String {
-        let lines = content.components(separatedBy: .newlines)
-        if lines.count <= maxLines {
-            return content
+        var result = ""
+        var lineCount = 0
+        var index = content.startIndex
+
+        while index < content.endIndex && lineCount < maxLines {
+            if content[index].isNewline {
+                lineCount += 1
+                if lineCount >= maxLines {
+                    return result + "..."
+                }
+            }
+            result.append(content[index])
+            index = content.index(after: index)
+
+            if result.count >= 2_000 {
+                return result + "..."
+            }
         }
-        return lines.prefix(maxLines).joined(separator: "\n") + "..."
+
+        return index < content.endIndex ? result + "..." : result
     }
-    
+
     /// 格式化时间
     var formattedTime: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
         return formatter.string(from: timestamp)
     }
-    
+
     /// 格式化日期
     var formattedDate: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MM-dd HH:mm"
         return formatter.string(from: timestamp)
     }
-    
+
     /// 格式化文件大小
     var formattedSize: String {
         if byteSize < 1024 {

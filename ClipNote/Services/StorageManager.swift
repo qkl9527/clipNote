@@ -5,35 +5,36 @@ import Combine
 /// SQLite 存储管理器
 class StorageManager: ObservableObject {
     static let shared = StorageManager()
-    
+
     @Published var clips: [ClipItem] = []
-    
+
     private var dbQueue: DatabaseQueue?
     private let maxItems: Int
-    
-    init(maxItems: Int = 1000) {
+    private let maxIndexedContentLength = 100_000
+
+    init(maxItems: Int = 100_000) {
         self.maxItems = maxItems
         setupDatabase()
     }
-    
+
     deinit {
         try? dbQueue?.close()
     }
-    
+
     // MARK: - 数据库设置
-    
+
     private func setupDatabase() {
         let fileManager = FileManager.default
         guard let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
             print("无法获取 Application Support 目录")
             return
         }
-        
+
         let appDir = appSupport.appendingPathComponent("ClipNote")
         try? fileManager.createDirectory(at: appDir, withIntermediateDirectories: true)
-        
+
         let dbPath = appDir.appendingPathComponent("clipnote.db").path
-        
+
         do {
             dbQueue = try DatabaseQueue(path: dbPath)
             try createTables()
@@ -42,7 +43,7 @@ class StorageManager: ObservableObject {
             print("数据库初始化失败: \(error)")
         }
     }
-    
+
     private func createTables() throws {
         try dbQueue?.write { db in
             // 创建 clips 表
@@ -63,7 +64,7 @@ class StorageManager: ObservableObject {
                 t.column("charCount", .integer)
                 t.column("byteSize", .integer)
             }
-            
+
             // 创建 FTS5 全文索引
             try db.execute(sql: """
                 CREATE VIRTUAL TABLE IF NOT EXISTS clips_fts USING fts5(
@@ -74,50 +75,72 @@ class StorageManager: ObservableObject {
                     content_rowid='rowid'
                 )
             """)
+
+            try db.execute(sql: "UPDATE clips SET category = 'text' WHERE category = 'markdown'")
+            try db.execute(sql: "UPDATE clips SET category = 'link' WHERE category = 'imageUrl'")
+            try db.execute(sql: "UPDATE clips SET category = 'image' WHERE category = 'imageBase64'")
+            try db.execute(sql: "UPDATE clips_fts SET category = 'text' WHERE category = 'markdown'")
+            try db.execute(sql: "UPDATE clips_fts SET category = 'link' WHERE category = 'imageUrl'")
+            try db.execute(sql: "UPDATE clips_fts SET category = 'image' WHERE category = 'imageBase64'")
         }
     }
-    
+
     // MARK: - CRUD 操作
-    
+
     /// 保存剪贴板条目
     func save(_ item: ClipItem) {
         // 检查是否已存在相同内容
         if let existingItem = findDuplicate(item) {
+            print("存在相同的内容:",  item)
             // 更新时间戳
             updateTimestamp(for: existingItem.id)
+            loadClips()
             return
         }
-        
+
         do {
             try dbQueue?.write { db in
                 try item.insert(db)
-                
+
                 // 更新 FTS 索引
-                try db.execute(sql: """
-                    INSERT INTO clips_fts(rowid, content, sourceApp, category)
-                    SELECT rowid, content, sourceApp, category FROM clips WHERE id = ?
-                """, arguments: [item.id.uuidString])
+                if item.content.count <= maxIndexedContentLength {
+                    try db.execute(sql: """
+                        INSERT INTO clips_fts(rowid, content, sourceApp, category)
+                        SELECT rowid, content, sourceApp, category FROM clips WHERE id = ?
+                    """, arguments: [item.id.uuidString])
+                }
             }
-            
+
             // 限制总条目数
             trimToMaxItems()
-            
+
             // 更新内存中的列表
             loadClips()
         } catch {
             print("保存失败: \(error)")
         }
     }
-    
+
     /// 查找重复条目
     private func findDuplicate(_ item: ClipItem) -> ClipItem? {
+        if let imageData = item.imageData {
+            return try? dbQueue?.read { db in
+                try ClipItem
+                    .filter(Column("category") == item.category.rawValue)
+                    .filter(Column("content") == item.content)
+                    .filter(Column("imageData") == imageData)
+                    .fetchOne(db)
+            }
+        }
+
         return try? dbQueue?.read { db in
             try ClipItem
                 .filter(Column("content") == item.content)
+                .filter(Column("category") == item.category.rawValue)
                 .fetchOne(db)
         }
     }
-    
+
     /// 更新时间戳
     private func updateTimestamp(for id: UUID) {
         try? dbQueue?.write { db in
@@ -126,7 +149,7 @@ class StorageManager: ObservableObject {
             """, arguments: [Date(), id.uuidString])
         }
     }
-    
+
     /// 加载所有剪贴板条目
     func loadClips() {
         do {
@@ -136,7 +159,7 @@ class StorageManager: ObservableObject {
                     .limit(maxItems)
                     .fetchAll(db)
             }
-            
+
             DispatchQueue.main.async {
                 self.clips = items ?? []
             }
@@ -144,7 +167,7 @@ class StorageManager: ObservableObject {
             print("加载失败: \(error)")
         }
     }
-    
+
     /// 获取最近的条目
     func fetchRecent(limit: Int = 5) -> [ClipItem] {
         return (try? dbQueue?.read { db in
@@ -154,7 +177,7 @@ class StorageManager: ObservableObject {
                 .fetchAll(db)
         }) ?? []
     }
-    
+
     /// 按分类筛选
     func fetchByCategory(_ category: ClipCategory) -> [ClipItem] {
         return (try? dbQueue?.read { db in
@@ -164,11 +187,11 @@ class StorageManager: ObservableObject {
                 .fetchAll(db)
         }) ?? []
     }
-    
+
     /// 搜索内容
     func search(query: String) -> [ClipItem] {
         guard !query.isEmpty else { return clips }
-        
+
         return (try? dbQueue?.read { db in
             try ClipItem
                 .filter(Column("content").like("%\(query)%"))
@@ -176,7 +199,7 @@ class StorageManager: ObservableObject {
                 .fetchAll(db)
         }) ?? []
     }
-    
+
     /// 切换固定状态
     func togglePin(for id: UUID) {
         try? dbQueue?.write { db in
@@ -186,7 +209,7 @@ class StorageManager: ObservableObject {
         }
         loadClips()
     }
-    
+
     /// 切换收藏状态
     func toggleFavorite(for id: UUID) {
         try? dbQueue?.write { db in
@@ -196,7 +219,7 @@ class StorageManager: ObservableObject {
         }
         loadClips()
     }
-    
+
     /// 删除条目
     func delete(_ id: UUID) {
         try? dbQueue?.write { db in
@@ -207,7 +230,7 @@ class StorageManager: ObservableObject {
         }
         loadClips()
     }
-    
+
     /// 清空所有条目
     func clearAll() {
         try? dbQueue?.write { db in
@@ -216,9 +239,9 @@ class StorageManager: ObservableObject {
         }
         loadClips()
     }
-    
+
     // MARK: - 辅助方法
-    
+
     /// 限制条目数量
     private func trimToMaxItems() {
         try? dbQueue?.write { db in
@@ -233,18 +256,18 @@ class StorageManager: ObservableObject {
             }
         }
     }
-    
+
     /// 获取总条目数
     var totalCount: Int {
         return (try? dbQueue?.read { db in
             try ClipItem.fetchCount(db)
         }) ?? 0
     }
-    
+
     /// 获取分类统计
     func categoryCounts() -> [ClipCategory: Int] {
         var counts: [ClipCategory: Int] = [:]
-        
+
         for category in ClipCategory.allCases {
             counts[category] = (try? dbQueue?.read { db in
                 try ClipItem
@@ -252,7 +275,7 @@ class StorageManager: ObservableObject {
                     .fetchCount(db)
             }) ?? 0
         }
-        
+
         return counts
     }
 }

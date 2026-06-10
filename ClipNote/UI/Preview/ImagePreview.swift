@@ -50,10 +50,6 @@ struct ImagePreview: View {
         switch category {
         case .image:
             return "图片"
-        case .imageBase64:
-            return "Base64 图片"
-        case .imageUrl:
-            return "图片链接"
         default:
             return "图片"
         }
